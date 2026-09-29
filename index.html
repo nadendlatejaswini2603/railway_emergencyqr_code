@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rail Safe QR - Emergency Portal</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d9534f">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 40px;
+            background-color: #f4f4f9;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: auto;
+        }
+
+        .language-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .language-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 16px;
+            line-height: 1.8;
+            white-space: nowrap;
+        }
+
+        #languageSelect {
+            padding: 10px 18px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .btn-main {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 18px;
+            width: 100%;
+            font-size: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .btn-main:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        #checkModal {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .btn-yes {
+            background-color: #28a743;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 48%;
+        }
+
+        .btn-no {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 48%;
+            float: right;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #autoTimer {
+            font-size: 12px;
+            color: #856404;
+            margin: 0 0 12px 0;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .timer-num {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #beaconSection {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+            text-align: left;
+            clear: both;
+        }
+
+        .btn-bt {
+            background-color: #f0ad4e;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .btn-bt:disabled {
+            background-color: #cccccc;
+        }
+
+        .return-message {
+            margin: 22px 5px 10px 5px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #d9534f;
+            border-radius: 6px;
+            line-height: 1.8;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .return-message p {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <!-- FIRST PAGE -->
+    <div id="firstPage">
+
+        <div class="language-section">
+            <label>Select Language</label>
+
+            <select id="languageSelect1" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="te">తెలుగు</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+        </div>
+
+        <h2 id="title">Rail Safe QR Emergency</h2>
+
+        <!-- Instruction shown in selected language -->
+        <div class="return-message">
+            <p id="returnMessage"></p>
+        </div>
+
+        <button id="mainBtn" class="btn-main" onclick="sendEmergencySMS()">
+            Send Emergency Alert
+        </button>
+
+    </div>
+
+    <!-- SECOND PAGE / RESULT PAGE -->
+    <div id="secondPage" style="display:none;">
+
+        <div class="language-section">
+            <label>Select Language</label>
+
+            <select id="languageSelect2" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="te">తెలుగు</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+        </div>
+
+        <h2 id="resultTitle">Emergency Message Status</h2>
+
+        <div id="checkModal">
+            <p id="questionText"
+               style="font-size: 13px; margin: 0 0 10px 0; color: #856404; font-weight: bold;">
+                Did your emergency text go through?
+            </p>
+
+            <p id="autoTimer"></p>
+
+            <button id="yesBtn" class="btn-yes" onclick="smsSuccessful()">
+                Yes, Sent
+            </button>
+
+            <button id="noBtn" class="btn-no" onclick="smsFailed()">
+                No / No Signal
+            </button>
+
+            <div id="beaconSection">
+                <p id="beaconQuestion"
+                   style="font-size: 12px; color: #721c24; margin: 10px 0 5px 0;">
+                    Dead zone confirmed. Activate physical track beacon?
+                </p>
+
+                <button id="beaconBtn" class="btn-bt" onclick="activateBeacon()">
+                    Turn on Bluetooth Pole Beacon
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    let leftForSMS = false;
+    let selectedLanguage = "en";
+
+    const translations = {
+
+        en: {
+            autoTimer: "Please confirm your message status. If no option is selected within {seconds} seconds, \"Not Sent\" will be chosen automatically.",
+            returnMessage: "If the message is not sent, please come back to this page.",
+            title: "Rail Safe QR Emergency",
+            resultTitle: "Emergency Message Status",
+            send: "Send Emergency Alert",
+            question: "Did your emergency text go through?",
+            yes: "Yes, Sent",
+            no: "No / No Signal",
+            beaconQuestion: "Dead zone confirmed. Activate physical track beacon?",
+            beacon: "Turn on Bluetooth Pole Beacon",
+            triggered: "Opening SMS...",
+            confirmed: "Confirmed Sent",
+            failed: "Failed / No Signal",
+            beaconActive: "Beacon Active",
+            recent: "This pole was recently reported. Please wait {minutes} minute(s) before sending another alert.",
+            beaconAlert: "Bluetooth command sent. Pole warning beacon is now flashing.",
+            smsMessage: "EMERGENCY: Track breakage reported at Pole AP-TRK-104. GPS: 16.5062, 80.6480"
+        },
+
+        te: {
+            autoTimer: "{seconds} సెకన్లలో మీరు ఏ ఎంపికను ఎంచుకోకపోతే, \"పంపబడలేదు\" ఎంచుకోబడుతుంది.",
+            returnMessage: "సందేశం పంపబడకపోతే, దయచేసి ఈ పేజీకి తిరిగి రండి.",
+            title: "రైల్ సేఫ్ QR అత్యవసరం",
+            resultTitle: "అత్యవసర సందేశం స్థితి",
+            send: "అత్యవసర హెచ్చరిక పంపండి",
+            question: "మీ అత్యవసర సందేశం పంపబడిందా?",
+            yes: "అవును, పంపబడింది",
+            no: "లేదు / సిగ్నల్ లేదు",
+            beaconQuestion: "సిగ్నల్ లేని ప్రాంతం నిర్ధారించబడింది. ట్రాక్ బీకాన్‌ను ప్రారంభించాలా?",
+            beacon: "బ్లూటూత్ పోల్ బీకాన్ ఆన్ చేయండి",
+            triggered: "SMS తెరవబడుతోంది...",
+            confirmed: "పంపినట్లు నిర్ధారించబడింది",
+            failed: "విఫలమైంది / సిగ్నల్ లేదు",
+            beaconActive: "బీకాన్ యాక్టివ్",
+            recent: "ఈ పోల్ గురించి ఇటీవలే నివేదించబడింది. మరో హెచ్చరిక పంపడానికి {minutes} నిమిషం(లు) వేచి ఉండండి.",
+            beaconAlert: "బ్లూటూత్ కమాండ్ పంపబడింది. పోల్ హెచ్చరిక బీకాన్ ఇప్పుడు ఫ్లాష్ అవుతోంది.",
+            smsMessage: "అత్యవసరం: పోల్ AP-TRK-104 వద్ద ట్రాక్ దెబ్బతిన్నట్లు నివేదించబడింది. GPS: 16.5062, 80.6480"
+        },
+
+        hi: {
+            autoTimer: "यदि आप {seconds} सेकंड के भीतर कोई विकल्प नहीं चुनते हैं, तो \"नहीं भेजा गया\" चुना जाएगा।",
+            returnMessage: "यदि संदेश नहीं भेजा गया है, तो कृपया इस पेज पर वापस आएँ।",
+            title: "रेल सेफ QR आपातकाल",
+            resultTitle: "आपातकालीन संदेश की स्थिति",
+            send: "आपातकालीन चेतावनी भेजें",
+            question: "क्या आपका आपातकालीन संदेश भेजा गया?",
+            yes: "हाँ, भेज दिया गया",
+            no: "नहीं / नेटवर्क नहीं है",
+            beaconQuestion: "नेटवर्क न होने वाला क्षेत्र पुष्टि हुआ। ट्रैक बीकन सक्रिय करें?",
+            beacon: "ब्लूटूथ पोल बीकन चालू करें",
+            triggered: "SMS खोला जा रहा है...",
+            confirmed: "भेजना सुनिश्चित हुआ",
+            failed: "विफल / नेटवर्क नहीं है",
+            beaconActive: "बीकन सक्रिय",
+            recent: "इस पोल की हाल ही में रिपोर्ट की गई है। दूसरी चेतावनी भेजने से पहले {minutes} मिनट प्रतीक्षा करें।",
+            beaconAlert: "ब्लूटूथ कमांड भेजा गया। पोल चेतावनी बीकन अब फ्लैश हो रहा है।",
+            smsMessage: "आपातकाल: पोल AP-TRK-104 पर ट्रैक क्षति की सूचना दी गई है। GPS: 16.5062, 80.6480"
+        }
+
+    };
+
+    // Auto timer: starts when the website is opened (30 seconds in total)
+    const AUTO_SECONDS = 30;
+    let autoDeadline = Date.now() + AUTO_SECONDS * 1000;
+    let autoTimerId = null;
+    let autoDone = false;
+
+    // Remember that the user left for the SMS app, so the website can
+    // reopen on the second page even if the browser reloads the page.
+    function savePending() {
+        try {
+            localStorage.setItem("railsafePending", String(autoDeadline));
+        } catch (e) {}
+    }
+
+    function clearPending() {
+        try {
+            localStorage.removeItem("railsafePending");
+        } catch (e) {}
+    }
+
+    function showSecondPage() {
+        document.getElementById("firstPage").style.display = "none";
+        document.getElementById("secondPage").style.display = "block";
+    }
+
+    function remainingSeconds() {
+        return Math.max(0, Math.ceil((autoDeadline - Date.now()) / 1000));
+    }
+
+    function updateTimerText() {
+        document.getElementById("autoTimer").innerHTML =
+            t("autoTimer").replace(
+                "{seconds}",
+                '<span class="timer-num">' + remainingSeconds() + '</span>'
+            );
+    }
+
+    function stopAutoTimer() {
+        if (autoTimerId) {
+            clearInterval(autoTimerId);
+            autoTimerId = null;
+        }
+        document.getElementById("autoTimer").style.display = "none";
+    }
+
+    // Automatically selects "No / No Signal" when time runs out
+    function autoSelectNo() {
+        autoDone = true;
+        stopAutoTimer();
+
+        document.getElementById("yesBtn").disabled = true;
+        document.getElementById("noBtn").disabled = true;
+        document.getElementById("noBtn").innerText = t("failed");
+        document.getElementById("beaconSection").style.display = "block";
+
+        if (leftForSMS && document.visibilityState === "visible") {
+            showSecondPage();
+            leftForSMS = false;
+            clearPending();
+        }
+    }
+
+    function autoTick() {
+        if (remainingSeconds() <= 0) {
+            autoSelectNo();
+        } else {
+            updateTimerText();
+        }
+    }
+
+    function startAutoTimer() {
+        updateTimerText();
+        autoTimerId = setInterval(autoTick, 1000);
+    }
+
+    function t(key) {
+        return translations[selectedLanguage][key];
+    }
+
+    function changeLanguage(language) {
+
+        selectedLanguage = language;
+
+        // Keep both language selectors synchronized.
+        document.getElementById("languageSelect1").value = selectedLanguage;
+        document.getElementById("languageSelect2").value = selectedLanguage;
+
+        document.getElementById("title").innerText = t("title");
+        document.getElementById("resultTitle").innerText = t("resultTitle");
+        document.getElementById("returnMessage").innerText = t("returnMessage");
+        document.getElementById("mainBtn").innerText = t("send");
+        document.getElementById("questionText").innerText = t("question");
+        document.getElementById("yesBtn").innerText = t("yes");
+        document.getElementById("noBtn").innerText = t("no");
+        document.getElementById("beaconQuestion").innerText = t("beaconQuestion");
+        document.getElementById("beaconBtn").innerText = t("beacon");
+        if (autoTimerId) { updateTimerText(); }
+    }
+
+    function sendEmergencySMS() {
+
+        const cooldownTime = 5 * 60 * 1000; // 5 minutes
+        const maxSends = 2;
+        const now = Date.now();
+
+        let sends = [];
+        try {
+            sends = JSON.parse(localStorage.getItem("alertTimestamps") || "[]");
+        } catch (e) {
+            sends = [];
+        }
+
+        // Keep only sends made within the last 2 minutes
+        sends = sends.filter(function(time) {
+            return now - time < cooldownTime;
+        });
+
+        if (sends.length >= maxSends) {
+
+            const remainingMinutes =
+                Math.ceil(
+                    (cooldownTime - (now - sends[0])) / 60000
+                );
+
+            alert(
+                t("recent").replace("{minutes}", remainingMinutes)
+            );
+
+            return;
+        }
+
+        const phoneNumber = "7207348256";
+        const message = t("smsMessage");
+
+        const isIOS =
+            /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+        const separator = isIOS ? "&" : "?";
+
+        sends.push(now);
+        localStorage.setItem(
+            "alertTimestamps",
+            JSON.stringify(sends)
+        );
+
+        const mainBtn =
+            document.getElementById("mainBtn");
+
+        mainBtn.disabled = true;
+        mainBtn.innerText = t("triggered");
+
+        leftForSMS = true;
+        savePending();
+
+        window.location.href =
+            `sms:${phoneNumber}${separator}body=${encodeURIComponent(message)}`;
+    }
+
+    document.addEventListener(
+        "visibilitychange",
+        function() {
+
+            if (
+                document.visibilityState === "visible" &&
+                leftForSMS
+            ) {
+
+                // Only now show the Sent / Not Sent page.
+                showSecondPage();
+
+                if (autoDone || remainingSeconds() <= 0) {
+
+                    // Time already ran out while the user was away.
+                    autoSelectNo();
+                    leftForSMS = false;
+                    clearPending();
+
+                } else {
+
+                    // Reset the result controls and show the remaining time.
+                    document.getElementById("yesBtn").disabled = false;
+                    document.getElementById("noBtn").disabled = false;
+                    document.getElementById("yesBtn").innerText = t("yes");
+                    document.getElementById("noBtn").innerText = t("no");
+                    document.getElementById("beaconSection").style.display = "none";
+
+                    updateTimerText();
+                }
+            }
+
+        }
+    );
+
+    function smsSuccessful() {
+
+        stopAutoTimer();
+        clearPending();
+
+        document.getElementById("yesBtn").disabled = true;
+        document.getElementById("noBtn").disabled = true;
+
+        document.getElementById("yesBtn").innerText =
+            t("confirmed");
+
+        leftForSMS = false;
+    }
+
+    function smsFailed() {
+
+        stopAutoTimer();
+        clearPending();
+        leftForSMS = false;
+
+        document.getElementById("yesBtn").disabled = true;
+        document.getElementById("noBtn").disabled = true;
+
+        document.getElementById("noBtn").innerText =
+            t("failed");
+
+        document.getElementById(
+            "beaconSection"
+        ).style.display = "block";
+    }
+
+    function activateBeacon() {
+
+        const beaconBtn =
+            document.getElementById("beaconBtn");
+
+        beaconBtn.disabled = true;
+        beaconBtn.innerText = t("beaconActive");
+
+        alert(t("beaconAlert"));
+    }
+
+    changeLanguage("en");
+
+    // If the user left for the SMS app earlier and the page was reloaded,
+    // reopen the website directly on the second page.
+    (function restoreSecondPage() {
+        let saved = null;
+        try {
+            saved = localStorage.getItem("railsafePending");
+        } catch (e) {}
+
+        if (!saved) { return; }
+
+        const savedDeadline = parseInt(saved, 10);
+
+        // Ignore old data (more than 1 hour past its deadline).
+        if (!savedDeadline || Date.now() - savedDeadline > 60 * 60 * 1000) {
+            clearPending();
+            return;
+        }
+
+        autoDeadline = savedDeadline;
+        leftForSMS = true;
+        showSecondPage();
+
+        if (remainingSeconds() <= 0) {
+            autoSelectNo();
+            leftForSMS = false;
+            clearPending();
+        }
+    })();
+
+    startAutoTimer();
+
+    // Register service worker for offline use
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function() {
+            navigator.serviceWorker.register("sw.js");
+        });
+    }
+
+</script>
+
+</body>
+</html>
